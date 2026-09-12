@@ -6,7 +6,7 @@
     import { getCurrentWindow } from "@tauri-apps/api/window";
 
     const appWindow = getCurrentWindow();
-    const isTauri = typeof window !== "undefined" && "__TAURI__" in window;
+    const isTauri = typeof window !== "undefined" && ("__TAURI_INTERNALS__" in window || "__TAURI__" in window);
 
     // Real status check. In Tauri it goes through Rust (no CORS, real HTTP
     // codes). In the browser it falls back to a CORS GET (may mark some
