@@ -4,6 +4,7 @@
     import { writeTextFile } from "@tauri-apps/plugin-fs";
     import { invoke } from "@tauri-apps/api/core";
     import { getCurrentWindow } from "@tauri-apps/api/window";
+    import { onMount } from "svelte";
 
     const appWindow = getCurrentWindow();
     const isTauri = typeof window !== "undefined" && ("__TAURI_INTERNALS__" in window || "__TAURI__" in window);
@@ -270,6 +271,31 @@
         "idle" | "checking" | "available" | "latest" | "error"
     >("idle");
     let updateVersion = $state("");
+    let appVersion = $state("");
+
+    onMount(async () => {
+        if (!isTauri) return;
+        try {
+            const { getVersion } = await import("@tauri-apps/api/app");
+            appVersion = await getVersion();
+        } catch {
+            /* version unavailable */
+        }
+        // Auto-check on startup (silent: no toast when already latest)
+        try {
+            const { check } = await import("@tauri-apps/plugin-updater");
+            const update = await check();
+            if (update) {
+                updateVersion = update.version;
+                updateStatus = "available";
+                showToast(`Update v${update.version} available`, "info");
+            } else {
+                updateStatus = "latest";
+            }
+        } catch {
+            /* keep idle so manual retry is possible */
+        }
+    });
 
     async function checkForUpdates() {
         if (updateStatus === "checking") return;
@@ -423,7 +449,7 @@
             >
             <span
                 class="text-xs text-[#999] bg-[#f0f0f0] px-1.5 py-0.5 font-medium"
-                >v0.1.0</span
+                >v{appVersion}</span
             >
             <button
                 onclick={() => {
@@ -1101,7 +1127,7 @@
                             <p class="font-semibold text-[#1a1a1a]">
                                 Check IPTV Plus
                             </p>
-                            <p class="text-[#999]">v0.1.0</p>
+                            <p class="text-[#999]">v{appVersion}</p>
                         </div>
                     </div>
                     <p>
