@@ -272,7 +272,11 @@
     let updateVersion = $state("");
 
     async function checkForUpdates() {
-        if (!isTauri || updateStatus === "checking") return;
+        if (updateStatus === "checking") return;
+        if (!isTauri) {
+            showToast("Updates are only available in the desktop app", "info");
+            return;
+        }
         updateStatus = "checking";
         try {
             const { check } = await import("@tauri-apps/plugin-updater");
